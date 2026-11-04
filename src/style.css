@@ -22,6 +22,11 @@ body {
   padding: 10px 18px;
 }
 
+.rate {
+  font-variant-numeric: tabular-nums;
+  color: #6b5232;
+}
+
 .shop {
   display: grid;
   gap: 10px;
