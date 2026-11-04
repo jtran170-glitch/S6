@@ -19,7 +19,12 @@ let honeyGrams = 0;
 
 const honeyDisplay = document.createElement("p");
 honeyDisplay.id = "honey-display";
-honeyDisplay.textContent = `Honey: ${honeyGrams.toLocaleString()} g`;
+
+// One place that mirrors state into the display, used by every change.
+function renderHoney(): void {
+  honeyDisplay.textContent = `Honey: ${honeyGrams.toLocaleString()} g`;
+}
+renderHoney();
 
 // A button created through TypeScript with an identity and a click listener.
 const clickButton = document.createElement("button");
@@ -27,7 +32,13 @@ clickButton.id = "harvest-button";
 clickButton.textContent = "Harvest honey";
 clickButton.addEventListener("click", () => {
   honeyGrams += 1;
-  honeyDisplay.textContent = `Honey: ${honeyGrams.toLocaleString()} g`;
+  renderHoney();
 });
+
+// The bees work on their own: +1 g per second, on a repeating timer.
+setInterval(() => {
+  honeyGrams += 1;
+  renderHoney();
+}, 1000);
 
 app.append(heading, image, honeyDisplay, clickButton);
