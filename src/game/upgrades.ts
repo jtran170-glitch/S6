@@ -42,6 +42,16 @@ export const UPGRADES: UpgradeDef[] = [
     effect: { kind: "passiveFlat", amount: 0.5 },
   },
   {
+    id: "wildflower-patch",
+    name: "Wildflower patch",
+    icon: "🌼",
+    description:
+      "A strip of meadow out front keeps the foragers close to home: all bee production ×1.25.",
+    baseCost: 300,
+    costGrowth: 1.5,
+    effect: { kind: "passiveMult", amount: 1.25 },
+  },
+  {
     id: "honey-press",
     name: "Honey press",
     icon: "🍯",
@@ -49,6 +59,26 @@ export const UPGRADES: UpgradeDef[] = [
     baseCost: 500,
     costGrowth: 2.4,
     effect: { kind: "clickMult", amount: 2 },
+  },
+  {
+    id: "queen-bee",
+    name: "Queen bee",
+    icon: "👑",
+    description:
+      "A stronger queen lays faster, and the whole colony follows her pace: all bee production ×2.",
+    baseCost: 2500,
+    costGrowth: 2.5,
+    effect: { kind: "passiveMult", amount: 2 },
+  },
+  {
+    id: "cypress-hive",
+    name: "Cypress hive",
+    icon: "🪵",
+    description:
+      "Cypress wood breathes with the seasons and never warps: +12 g/s.",
+    baseCost: 8000,
+    costGrowth: 1.3,
+    effect: { kind: "passiveFlat", amount: 12 },
   },
 ];
 
