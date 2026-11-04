@@ -21,8 +21,11 @@ const honeyDisplay = document.createElement("p");
 honeyDisplay.id = "honey-display";
 
 // One place that mirrors state into the display, used by every change.
+// Honey accrues fractionally, so whole grams are what get banked on screen.
 function renderHoney(): void {
-  honeyDisplay.textContent = `Honey: ${honeyGrams.toLocaleString()} g`;
+  honeyDisplay.textContent = `Honey: ${
+    Math.floor(honeyGrams).toLocaleString()
+  } g`;
 }
 renderHoney();
 
@@ -35,10 +38,19 @@ clickButton.addEventListener("click", () => {
   renderHoney();
 });
 
-// The bees work on their own: +1 g per second, on a repeating timer.
-setInterval(() => {
-  honeyGrams += 1;
+// The bees work on their own. A repeating interval can't see how much time
+// actually passed, so production is driven by animation frames and elapsed
+// time instead: +1 g per real second, independent of frame rate. Frames are
+// not summed on top of the interval — the interval is gone entirely.
+let lastFrameTime = performance.now();
+
+function tick(now: number): void {
+  const elapsedSeconds = (now - lastFrameTime) / 1000;
+  lastFrameTime = now;
+  honeyGrams += elapsedSeconds;
   renderHoney();
-}, 1000);
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
 
 app.append(heading, image, honeyDisplay, clickButton);
