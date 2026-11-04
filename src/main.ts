@@ -14,12 +14,20 @@ image.alt = "A teal tile with a cream circle";
 image.width = 96;
 image.height = 96;
 
+// The resource. Honey is stored in grams, a real unit for an apiary.
+let honeyGrams = 0;
+
+const honeyDisplay = document.createElement("p");
+honeyDisplay.id = "honey-display";
+honeyDisplay.textContent = `Honey: ${honeyGrams.toLocaleString()} g`;
+
 // A button created through TypeScript with an identity and a click listener.
 const clickButton = document.createElement("button");
 clickButton.id = "harvest-button";
-clickButton.textContent = "Click me";
+clickButton.textContent = "Harvest honey";
 clickButton.addEventListener("click", () => {
-  console.log("harvest-button clicked: the handler ran");
+  honeyGrams += 1;
+  honeyDisplay.textContent = `Honey: ${honeyGrams.toLocaleString()} g`;
 });
 
-app.append(heading, image, clickButton);
+app.append(heading, image, honeyDisplay, clickButton);
