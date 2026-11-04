@@ -1,18 +1,16 @@
 // Vite turns this import into a production-safe URL. Keep it as a file so
-// even this tiny example demonstrates a separately deployed asset.
+// assets deploy separately, exactly like the game bundle.
 // @deno-types="./asset-url.d.ts"
-import tileUrl from "./assets/tile.svg?no-inline";
+import faviconUrl from "./assets/favicon.svg?no-inline";
 
 const app = document.querySelector<HTMLElement>("#app")!;
 
-const heading = document.createElement("h1");
-heading.textContent = "D1 project";
-
-const image = document.createElement("img");
-image.src = tileUrl;
-image.alt = "A teal tile with a cream circle";
-image.width = 96;
-image.height = 96;
+// The browser tab gets a honeycomb mark from the deployed asset.
+const favicon = document.createElement("link");
+favicon.rel = "icon";
+favicon.type = "image/svg+xml";
+favicon.href = faviconUrl;
+document.head.append(favicon);
 
 // The resource. Honey is stored in grams, a real unit for an apiary.
 let honeyGrams = 0;
@@ -47,15 +45,69 @@ function clickGain(): number {
   return (1 + 2 * smokers) * 2 ** honeyPresses;
 }
 
+// Header: the game's name and what it is about.
+const header = document.createElement("header");
+const heading = document.createElement("h1");
+heading.textContent = "🐝 Apiary";
+const tagline = document.createElement("p");
+tagline.className = "tagline";
+tagline.textContent = "Tend the hive. Bottle the gold.";
+header.append(heading, tagline);
+
 const honeyDisplay = document.createElement("p");
 honeyDisplay.id = "honey-display";
+honeyDisplay.className = "honey";
 
-// A button created through TypeScript with an identity and a click listener.
-const clickButton = document.createElement("button");
-clickButton.id = "harvest-button";
-clickButton.textContent = "Harvest honey";
-clickButton.addEventListener("click", () => {
-  honeyGrams += clickGain();
+// The hive itself is the main action: click it to harvest honey by hand.
+// The skep (dome hive) is drawn inline; two bees drift around it.
+const HIVE_SVG = `
+<svg viewBox="0 0 200 200" aria-hidden="true">
+  <ellipse cx="100" cy="172" rx="60" ry="9" fill="#7a4f21" opacity="0.22" />
+  <g stroke="#8a5a2b" stroke-width="3">
+    <path d="M70 58 A30 30 0 0 1 130 58 Z" fill="#f0b94f" />
+    <rect x="62" y="56" width="76" height="32" rx="16" fill="#e2a23c" />
+    <rect x="52" y="86" width="96" height="34" rx="17" fill="#f0b94f" />
+    <rect x="44" y="118" width="112" height="34" rx="17" fill="#e2a23c" />
+  </g>
+  <circle cx="100" cy="25" r="5" fill="#8a5a2b" />
+  <path d="M86 152 v-5 a14 14 0 0 1 28 0 v5 z" fill="#4a2c14" />
+  <g class="bee bee-a">
+    <ellipse cx="150" cy="66" rx="7" ry="5" fill="#ffcf40" stroke="#3b2c1a" stroke-width="1.5" />
+    <path d="M146 64 h8 M146 68 h8" stroke="#3b2c1a" stroke-width="1.5" />
+    <ellipse cx="147" cy="59" rx="4" ry="2.5" fill="#ffffff" opacity="0.85" />
+    <ellipse cx="153" cy="59" rx="4" ry="2.5" fill="#ffffff" opacity="0.85" />
+  </g>
+  <g class="bee bee-b">
+    <ellipse cx="40" cy="118" rx="7" ry="5" fill="#ffcf40" stroke="#3b2c1a" stroke-width="1.5" />
+    <path d="M36 116 h8 M36 120 h8" stroke="#3b2c1a" stroke-width="1.5" />
+    <ellipse cx="37" cy="111" rx="4" ry="2.5" fill="#ffffff" opacity="0.85" />
+    <ellipse cx="43" cy="111" rx="4" ry="2.5" fill="#ffffff" opacity="0.85" />
+  </g>
+</svg>`;
+
+const hive = document.createElement("button");
+hive.id = "hive";
+hive.className = "hive";
+hive.type = "button";
+hive.ariaLabel = "Harvest honey from the hive";
+hive.innerHTML = HIVE_SVG;
+
+// Small "+N g" numbers drift up from where you harvested. Decorative only.
+function showHarvestFloat(gain: number): void {
+  const floater = document.createElement("span");
+  floater.className = "float-num";
+  floater.ariaHidden = "true";
+  floater.textContent = `+${gain.toLocaleString()} g`;
+  floater.style.left = `${20 + Math.random() * 60}%`;
+  floater.style.top = `${35 + Math.random() * 25}%`;
+  floater.addEventListener("animationend", () => floater.remove());
+  hive.append(floater);
+}
+
+hive.addEventListener("click", () => {
+  const gain = clickGain();
+  honeyGrams += gain;
+  showHarvestFloat(gain);
   render();
 });
 
@@ -71,34 +123,52 @@ const shop = document.createElement("section");
 shop.className = "shop";
 shop.ariaLabel = "Upgrades";
 
-function createShopCard(name: string, description: string) {
+const shopHeading = document.createElement("h2");
+shopHeading.textContent = "Upgrades";
+shop.append(shopHeading);
+
+const shopGrid = document.createElement("div");
+shopGrid.className = "shop-grid";
+
+function createShopCard(
+  name: string,
+  icon: string,
+  description: string,
+  buttonLabel: string,
+) {
   const card = document.createElement("article");
   card.className = "shop-card";
-  const cardHeading = document.createElement("h2");
-  cardHeading.textContent = name;
+  const cardHeading = document.createElement("h3");
+  cardHeading.textContent = `${icon} ${name}`;
   const cardDescription = document.createElement("p");
   cardDescription.textContent = description;
   const cardInfo = document.createElement("p");
   cardInfo.className = "upgrade-info";
   const buyButton = document.createElement("button");
+  buyButton.textContent = buttonLabel;
   card.append(cardHeading, cardDescription, cardInfo, buyButton);
   return { card, info: cardInfo, button: buyButton };
 }
 
 const smoker = createShopCard(
   "Smoker",
-  "Calms the bees: +2 g per hand harvest.",
+  "💨",
+  "Cool puffs of smoke keep the colony calm while you work: +2 g per hand harvest.",
+  "Buy a smoker",
 );
 const workerBee = createShopCard(
   "Worker bee",
-  "One more forager on the comb: +0.5 g/s.",
+  "🐝",
+  "One more forager on the comb, working around the clock: +0.5 g/s.",
+  "Buy a worker bee",
 );
 const honeyPress = createShopCard(
   "Honey press",
-  "Presses every comb twice as hard: doubles hand-harvest yield.",
+  "🍯",
+  "Crush every comb twice as hard: hand-harvest yield ×2.",
+  "Buy a honey press",
 );
 
-smoker.button.textContent = "Buy a smoker";
 smoker.button.addEventListener("click", () => {
   const cost = currentCost(SMOKER_BASE_COST, SMOKER_GROWTH, smokers);
   if (honeyGrams < cost) return;
@@ -107,7 +177,6 @@ smoker.button.addEventListener("click", () => {
   render();
 });
 
-workerBee.button.textContent = "Buy a worker bee";
 workerBee.button.addEventListener("click", () => {
   const cost = currentCost(
     WORKER_BEE_BASE_COST,
@@ -120,7 +189,6 @@ workerBee.button.addEventListener("click", () => {
   render();
 });
 
-honeyPress.button.textContent = "Buy a honey press";
 honeyPress.button.addEventListener("click", () => {
   const cost = currentCost(
     HONEY_PRESS_BASE_COST,
@@ -133,7 +201,8 @@ honeyPress.button.addEventListener("click", () => {
   render();
 });
 
-shop.append(smoker.card, workerBee.card, honeyPress.card);
+shopGrid.append(smoker.card, workerBee.card, honeyPress.card);
+shop.append(shopGrid);
 
 // One place that mirrors state into the display, used by every change.
 // Honey accrues fractionally, so whole grams are what get banked on screen.
@@ -145,9 +214,9 @@ function render(): void {
   honeyDisplay.textContent = `Honey: ${
     Math.floor(honeyGrams).toLocaleString()
   } g`;
-  rateDisplay.textContent = `Bee production: +${
+  rateDisplay.textContent = `Your bees make +${
     formatRate(passiveRate())
-  } g/s · Each harvest: +${clickGain().toLocaleString()} g`;
+  } g/s · each harvest brings +${clickGain().toLocaleString()} g`;
 
   smoker.info.textContent = `Cost: ${
     currentCost(SMOKER_BASE_COST, SMOKER_GROWTH, smokers).toLocaleString()
@@ -192,4 +261,4 @@ function tick(now: number): void {
 }
 requestAnimationFrame(tick);
 
-app.append(heading, image, honeyDisplay, clickButton, rateDisplay, shop);
+app.append(header, honeyDisplay, hive, rateDisplay, shop);
