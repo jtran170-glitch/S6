@@ -14,7 +14,12 @@ image.alt = "A teal tile with a cream circle";
 image.width = 96;
 image.height = 96;
 
-const message = document.createElement("p");
-message.textContent = "Your project starts here.";
+// A button created through TypeScript with an identity and a click listener.
+const clickButton = document.createElement("button");
+clickButton.id = "harvest-button";
+clickButton.textContent = "Click me";
+clickButton.addEventListener("click", () => {
+  console.log("harvest-button clicked: the handler ran");
+});
 
-app.append(heading, image, message);
+app.append(heading, image, clickButton);
