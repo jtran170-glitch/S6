@@ -17,14 +17,25 @@ image.height = 96;
 // The resource. Honey is stored in grams, a real unit for an apiary.
 let honeyGrams = 0;
 
-// Upgrade counts and their flat costs (scaling arrives later).
+// Upgrade counts, with base costs and how fast each price climbs per
+// purchase. A cost multiplies by its growth factor every time you buy one
+// more, so early purchases stay cheap and later ones bite.
 let smokers = 0;
 let workerBees = 0;
 let honeyPresses = 0;
 
-const SMOKER_COST = 20;
-const WORKER_BEE_COST = 25;
-const HONEY_PRESS_COST = 500;
+const SMOKER_BASE_COST = 20;
+const SMOKER_GROWTH = 1.4;
+const WORKER_BEE_BASE_COST = 25;
+const WORKER_BEE_GROWTH = 1.18;
+const HONEY_PRESS_BASE_COST = 500;
+const HONEY_PRESS_GROWTH = 2.4;
+
+// The price of the next purchase: base cost times growth^owned, rounded up
+// so costs stay in whole grams.
+function currentCost(baseCost: number, growth: number, owned: number): number {
+  return Math.ceil(baseCost * growth ** owned);
+}
 
 // Your starter colony makes 1 g/s; each worker bee adds 0.5 g/s.
 function passiveRate(): number {
@@ -89,24 +100,35 @@ const honeyPress = createShopCard(
 
 smoker.button.textContent = "Buy a smoker";
 smoker.button.addEventListener("click", () => {
-  if (honeyGrams < SMOKER_COST) return;
-  honeyGrams -= SMOKER_COST;
+  const cost = currentCost(SMOKER_BASE_COST, SMOKER_GROWTH, smokers);
+  if (honeyGrams < cost) return;
+  honeyGrams -= cost;
   smokers += 1;
   render();
 });
 
 workerBee.button.textContent = "Buy a worker bee";
 workerBee.button.addEventListener("click", () => {
-  if (honeyGrams < WORKER_BEE_COST) return;
-  honeyGrams -= WORKER_BEE_COST;
+  const cost = currentCost(
+    WORKER_BEE_BASE_COST,
+    WORKER_BEE_GROWTH,
+    workerBees,
+  );
+  if (honeyGrams < cost) return;
+  honeyGrams -= cost;
   workerBees += 1;
   render();
 });
 
 honeyPress.button.textContent = "Buy a honey press";
 honeyPress.button.addEventListener("click", () => {
-  if (honeyGrams < HONEY_PRESS_COST) return;
-  honeyGrams -= HONEY_PRESS_COST;
+  const cost = currentCost(
+    HONEY_PRESS_BASE_COST,
+    HONEY_PRESS_GROWTH,
+    honeyPresses,
+  );
+  if (honeyGrams < cost) return;
+  honeyGrams -= cost;
   honeyPresses += 1;
   render();
 });
@@ -127,21 +149,29 @@ function render(): void {
     formatRate(passiveRate())
   } g/s · Each harvest: +${clickGain().toLocaleString()} g`;
 
-  smoker.info.textContent =
-    `Cost: ${SMOKER_COST.toLocaleString()} g · Owned: ${smokers}`;
-  const smokerAffordable = honeyGrams >= SMOKER_COST;
+  smoker.info.textContent = `Cost: ${
+    currentCost(SMOKER_BASE_COST, SMOKER_GROWTH, smokers).toLocaleString()
+  } g · Owned: ${smokers}`;
+  const smokerAffordable =
+    honeyGrams >= currentCost(SMOKER_BASE_COST, SMOKER_GROWTH, smokers);
   smoker.button.disabled = !smokerAffordable;
   smoker.card.dataset.affordable = String(smokerAffordable);
 
-  workerBee.info.textContent =
-    `Cost: ${WORKER_BEE_COST.toLocaleString()} g · Owned: ${workerBees}`;
-  const workerBeeAffordable = honeyGrams >= WORKER_BEE_COST;
+  workerBee.info.textContent = `Cost: ${
+    currentCost(WORKER_BEE_BASE_COST, WORKER_BEE_GROWTH, workerBees)
+      .toLocaleString()
+  } g · Owned: ${workerBees}`;
+  const workerBeeAffordable = honeyGrams >=
+    currentCost(WORKER_BEE_BASE_COST, WORKER_BEE_GROWTH, workerBees);
   workerBee.button.disabled = !workerBeeAffordable;
   workerBee.card.dataset.affordable = String(workerBeeAffordable);
 
-  honeyPress.info.textContent =
-    `Cost: ${HONEY_PRESS_COST.toLocaleString()} g · Owned: ${honeyPresses}`;
-  const honeyPressAffordable = honeyGrams >= HONEY_PRESS_COST;
+  honeyPress.info.textContent = `Cost: ${
+    currentCost(HONEY_PRESS_BASE_COST, HONEY_PRESS_GROWTH, honeyPresses)
+      .toLocaleString()
+  } g · Owned: ${honeyPresses}`;
+  const honeyPressAffordable = honeyGrams >=
+    currentCost(HONEY_PRESS_BASE_COST, HONEY_PRESS_GROWTH, honeyPresses);
   honeyPress.button.disabled = !honeyPressAffordable;
   honeyPress.card.dataset.affordable = String(honeyPressAffordable);
 }
